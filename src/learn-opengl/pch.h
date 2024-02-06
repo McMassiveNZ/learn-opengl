@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <format>
 #include <vector>
 #include <chrono>
 #include <thread>
