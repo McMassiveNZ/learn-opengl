@@ -1,6 +1,7 @@
+#include "pch.h"
 #include "window.h"
 
-namespace ogl_starter
+namespace wmcv
 {
 
 struct NullWindowImpl final
@@ -23,7 +24,7 @@ void* GetNativeHandle(const NullWindowImpl&)
 
 } // namespace ogl_starter
 
-ogl_starter::Window oglsCreateWindow(ogl_starter::WindowCreateParams)
+wmcv::Window oglsCreateWindow(wmcv::WindowCreateParams)
 {
-	return ogl_starter::NullWindowImpl{};
+	return wmcv::NullWindowImpl{};
 }

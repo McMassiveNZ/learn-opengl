@@ -1,5 +1,5 @@
-include(${CMAKE_SCRIPTS_DIR}/googletest.cmake)
-set(current_target opengl-starter-test)
+include(gtest)
+set(current_target learn-opengl-test)
 
 add_executable(
   ${current_target}

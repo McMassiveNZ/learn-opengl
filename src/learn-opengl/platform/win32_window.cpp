@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "window.h"
 
 #ifndef NOMINMAX
@@ -26,7 +27,7 @@ static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPA
 	return 0;
 }
 
-namespace ogl_starter
+namespace wmcv
 {
 
 struct Win32WindowImpl final
@@ -39,21 +40,21 @@ struct Win32WindowImpl final
 void PumpMessages(Win32WindowImpl& window)
 {
 	MSG message = {};
-	if (GetMessage(&message, NULL, 0, 0) != 0)
+	if (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) != FALSE)
 	{
+		if ( message.message == WM_QUIT )	
+		{
+			window.m_close = true;
+		}
+
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 	}
-	else
-	{
-		// GetMessage returned WM_QUIT
-		window.m_close = true;
-	}
 }
 
-bool ShouldClose(const Win32WindowImpl& window)
+bool IsOpen(const Win32WindowImpl& window)
 {
-	return window.m_close;
+	return window.m_close == false;
 }
 
 void* GetNativeHandle(const Win32WindowImpl& window)
@@ -62,11 +63,11 @@ void* GetNativeHandle(const Win32WindowImpl& window)
 }
 } // namespace ogl_starter
 
-ogl_starter::Window oglsCreateWindow(ogl_starter::WindowCreateParams params)
+wmcv::Window wmcvCreateWindow(wmcv::WindowCreateParams params)
 {
 	const char className[] = "Win32WindowImpl";
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	ogl_starter::Win32WindowImpl result = {
+	wmcv::Win32WindowImpl result = {
 		.m_hInstance = nullptr,
 		.m_hWnd = nullptr,
 		.m_close = true};

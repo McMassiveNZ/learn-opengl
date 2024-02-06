@@ -1,8 +1,6 @@
 #pragma once
 
-#include <memory>
-
-namespace ogl_starter
+namespace wmcv
 {
 
 struct WindowCreateParams
@@ -17,7 +15,7 @@ struct WindowCreateParams
 template <typename T>
 concept IsWindow = requires(T t) {
 	PumpMessages(t);
-	ShouldClose(t);
+	IsOpen(t);
 	GetNativeHandle(t);
 };
 
@@ -37,7 +35,7 @@ public:
 	Window operator=(const Window&) = delete;
 
 	friend void PumpMessages(Window& window) { window.self->PumpMessages_(); }
-	friend bool ShouldClose(const Window& window) { return window.self->ShouldClose_(); }
+	friend bool IsOpen(const Window& window) { return window.self->IsOpen_(); }
 	friend void* GetNativeHandle(const Window& window) { return window.self->GetNativeHandle_(); }
 
 private:
@@ -45,7 +43,7 @@ private:
 	{
 		virtual ~concept_t() = default;
 		virtual void PumpMessages_() = 0;
-		virtual bool ShouldClose_() const = 0;
+		virtual bool IsOpen_() const = 0;
 		virtual void* GetNativeHandle_() const = 0;
 	};
 
@@ -55,7 +53,7 @@ private:
 		model_t(T&& data) : m_data(std::move(data)) {}
 
 		virtual void PumpMessages_() override { PumpMessages(m_data); }
-		virtual bool ShouldClose_() const override { return ShouldClose(m_data); }
+		virtual bool IsOpen_() const override { return IsOpen(m_data); }
 		virtual void* GetNativeHandle_() const override { return GetNativeHandle(m_data); }
 
 		T m_data;
@@ -66,4 +64,4 @@ private:
 
 } // namespace starter_window
 
-ogl_starter::Window oglsCreateWindow(ogl_starter::WindowCreateParams params);
+wmcv::Window wmcvCreateWindow(wmcv::WindowCreateParams params);

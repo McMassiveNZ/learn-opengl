@@ -1,6 +1,7 @@
+#include "pch.h"
 #include "opengl.h"
 
-namespace ogl_starter
+namespace wmcv
 {
 struct NullOpenGLImpl final
 {
@@ -23,7 +24,7 @@ void Destroy(const NullOpenGLImpl&)
 }
 } // namespace ogl_starter
 
-ogl_starter::OpenGL oglsCreateOpenGL(ogl_starter::OpenGLCreateParams)
+wmcv::OpenGL oglsCreateOpenGL(wmcv::OpenGLCreateParams)
 {
-	return ogl_starter::NullOpenGLImpl{};
+	return wmcv::NullOpenGLImpl{};
 }

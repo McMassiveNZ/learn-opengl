@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.23)
 
-project(learn-opengl VERSION 1.0.0)
+project(wmcv-log VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
@@ -13,13 +13,12 @@ OPTION(ENABLE_WARNINGS_AS_ERRORS "Warnings are treated as Errors" ON)
 OPTION(ENABLE_STATIC_ANALYSIS "Enable Static Analysis Tools" OFF)
 OPTION(ENABLE_SANITIZERS "Enable Sanitizer Tools" OFF)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(compilerwarnings)
 include(sanitizers)
 include(staticanalysis)
 include(cpm)
-include(precompiled)
 
 if (ENABLE_TESTS)
     message("-- Unit Testing Enabled")
@@ -28,3 +27,4 @@ if (ENABLE_TESTS)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(include)

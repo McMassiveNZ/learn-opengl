@@ -1,4 +1,6 @@
+#include "pch.h"
 #include "opengl.h"
+#include "shader.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -9,9 +11,8 @@
 #endif
 
 #include <Windows.h>
-#include <GL/GL.h>
-#include "GL/glext.h"
-#include "GL/wglext.h"
+
+namespace fs = std::filesystem;
 
 template <typename T>
 static T LoadGLProc(const char* functionName)
@@ -26,37 +27,37 @@ if (!proc) \
 	MessageBox(NULL, "Failed to load " #proc, "Fatal Error", MB_ICONERROR); \
 }
 
-static PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
-static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = nullptr;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
+PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback = nullptr;
+PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
+PFNGLDELETEPROGRAMPROC glDeleteProgram = nullptr;
+PFNGLATTACHSHADERPROC glAttachShader = nullptr;
+PFNGLLINKPROGRAMPROC glLinkProgram = nullptr;
+PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
+PFNGLGETPROGRAMIVPROC glGetProgramiv = nullptr;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
+PFNGLCREATESHADERPROC glCreateShader = nullptr;
+PFNGLDELETESHADERPROC glDeleteShader = nullptr;
+PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
+PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
+PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
+PFNGLUNIFORM1IPROC glUniform1i = nullptr;
+PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLUNIFORM4FPROC glUniform4f = nullptr;
+PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
+PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
+PFNGLGENBUFFERSPROC glGenBuffers = nullptr;
+PFNGLBINDBUFFERPROC glBindBuffer = nullptr;
+PFNGLBUFFERDATAPROC glBufferData = nullptr;
 
-static PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
-
-static PFNGLCREATEPROGRAMPROC glCreateProgram;
-static PFNGLDELETEPROGRAMPROC glDeleteProgram;
-static PFNGLATTACHSHADERPROC glAttachShader;
-static PFNGLLINKPROGRAMPROC glLinkProgram;
-static PFNGLUSEPROGRAMPROC glUseProgram;
-static PFNGLGETPROGRAMIVPROC glGetProgramiv;
-static PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-static PFNGLCREATESHADERPROC glCreateShader;
-static PFNGLDELETESHADERPROC glDeleteShader;
-static PFNGLCOMPILESHADERPROC glCompileShader;
-static PFNGLSHADERSOURCEPROC glShaderSource;
-static PFNGLGETSHADERIVPROC glGetShaderiv;
-static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-
-static PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-static PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
-static PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-static PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-static PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-
-static PFNGLGENBUFFERSPROC glGenBuffers;
-static PFNGLBINDBUFFERPROC glBindBuffer;
-static PFNGLBUFFERDATAPROC glBufferData;
-
-namespace ogl_starter
+namespace wmcv
 {
 
 static void LoadGLFunctions()
@@ -77,6 +78,11 @@ static void LoadGLFunctions()
 	glShaderSource = LoadGLProc<PFNGLSHADERSOURCEPROC>("glShaderSource");
 	glGetShaderiv = LoadGLProc<PFNGLGETSHADERIVPROC>("glGetShaderiv");
 	glGetShaderInfoLog = LoadGLProc<PFNGLGETSHADERINFOLOGPROC>("glGetShaderInfoLog");
+	glGetUniformLocation = LoadGLProc<PFNGLGETUNIFORMLOCATIONPROC>("glGetUniformLocation");
+
+	glUniform1i = LoadGLProc<PFNGLUNIFORM1IPROC>("glUniform1i");
+	glUniform1f = LoadGLProc<PFNGLUNIFORM1FPROC>("glUniform1f");
+	glUniform4f = LoadGLProc<PFNGLUNIFORM4FPROC>("glUniform4f");
 
 	glGenVertexArrays = LoadGLProc<PFNGLGENVERTEXARRAYSPROC>("glGenVertexArrays");
 	glDeleteVertexArrays = LoadGLProc<PFNGLDELETEVERTEXARRAYSPROC>("glDeleteVertexArrays");
@@ -89,18 +95,17 @@ static void LoadGLFunctions()
 	glBufferData = LoadGLProc<PFNGLBUFFERDATAPROC>("glBufferData");
 }
 
-static std::pair<GLuint, GLuint> InitTriangleResources()
+static GLuint InitTriangleResources()
 {
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
+		0.5f,  0.5f, 0.0f,  1.f, 0.f, 0.f,
+	   -0.5f,  0.5f, 0.0f,  0.f, 1.f, 0.f,
+		0.0f, -0.5f, 0.0f,  0.f, 0.f, 1.f
 	};
 
 	unsigned int indices[] = {
-		0, 1, 3,
-		1, 2, 3
+		0, 1, 2,
+		//1, 2, 3
 	};
 
 	GLuint VAO;
@@ -117,69 +122,14 @@ static std::pair<GLuint, GLuint> InitTriangleResources()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
-	auto VS = glCreateShader(GL_VERTEX_SHADER);
-	auto FS = glCreateShader(GL_FRAGMENT_SHADER);
-
-	const char* vs_source =
-		"#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-		"void main()\n"
-		"{\n"
-		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-		"}\0";
-
-	glShaderSource(VS, 1, &vs_source, nullptr);
-	glCompileShader(VS);
-
-	int success;
-	char infoLog[512];
-	glGetShaderiv(VS, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(VS, 512, nullptr, infoLog);
-		printf("Vertex Shader Compilation Failed\n %s\n", infoLog);
-	}
-
-	auto fs_source =
-		"#version 330 core\n"
-		"out vec4 FragColor;\n"
-		"void main()\n"
-		"{\n"
-		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-		"}\0";
-
-
-	glShaderSource(FS, 1, &fs_source, nullptr);
-	glCompileShader(FS);
-	glGetShaderiv(FS, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(VS, 512, nullptr, infoLog);
-		printf("Fragment Shader Compilation Failed\n %s\n", infoLog);
-	}
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, VS);
-	glAttachShader(shaderProgram, FS);
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-		printf("Shader Program Link Failed\n %s\n", infoLog);
-	}
-
-	glUseProgram(shaderProgram);
-	glDeleteShader(VS);
-	glDeleteShader(FS);
-
-	return {VAO, shaderProgram};
+	return VAO;
  }
 
 struct Win32OpenGLImpl final
@@ -189,7 +139,7 @@ struct Win32OpenGLImpl final
 	HWND m_windowHandle;
 
 	GLuint VAO;
-	GLuint shaderProgram;
+	wmcv::Shader shaderProgram;
 };
 
 void ClearBuffers(const Win32OpenGLImpl&)
@@ -203,20 +153,23 @@ void Present(const Win32OpenGLImpl& opengl)
 	SwapBuffers(opengl.m_deviceContext);
 }
 
-void DrawScene(const Win32OpenGLImpl&)
+void DrawScene(Win32OpenGLImpl& opengl)
 {
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	opengl.shaderProgram.use();
+
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+
+	glUseProgram(0);
 }
 
 void Destroy(const Win32OpenGLImpl& opengl)
 {
-	glDeleteShader(opengl.shaderProgram);
 	wglMakeCurrent(nullptr, nullptr);
 	wglDeleteContext(opengl.m_renderingContext);
 }
 } // namespace ogl_starter
 
-ogl_starter::OpenGL oglsCreateOpenGL(ogl_starter::OpenGLCreateParams params)
+wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 {
 	auto hWnd = static_cast<HWND>(params.nativeWindowHandle);
 	auto hInstance = GetModuleHandle(NULL);
@@ -342,16 +295,28 @@ ogl_starter::OpenGL oglsCreateOpenGL(ogl_starter::OpenGLCreateParams params)
 		MessageBox(nullptr, "wglMakeCurrent() failed.", "Fatal Error", MB_ICONERROR);
 	}
 
-	ogl_starter::LoadGLFunctions();
-	auto[VAO, shaderProgram] = ogl_starter::InitTriangleResources();
+	wmcv::LoadGLFunctions();
 
-	auto result = ogl_starter::Win32OpenGLImpl(
-		deviceContext,
-		renderingContext,
-		hWnd,
-		VAO,
-		shaderProgram
-	);
+	const auto shader_path_dir = 
+		fs::current_path().root_name() /
+		fs::current_path().root_directory() / 
+		fs::path("z") /
+		fs::path("git") / 
+		fs::path("learn-opengl") / 
+		fs::path("src") / 
+		fs::path("learn-opengl");
 
-	return std::move(result);
+	const auto vs_path = (shader_path_dir / fs::path("vert.txt")).make_preferred();
+	const auto fs_path = (shader_path_dir / fs::path("frag.txt")).make_preferred();
+
+	auto result = wmcv::Win32OpenGLImpl
+	{
+		.m_deviceContext = deviceContext,
+		.m_renderingContext = renderingContext,
+		.m_windowHandle = hWnd,
+		.VAO = wmcv::InitTriangleResources(),
+		.shaderProgram = wmcv::Shader(vs_path, fs_path)
+	};
+
+	return result;
 }
