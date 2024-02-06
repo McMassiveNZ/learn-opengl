@@ -300,7 +300,8 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 	const auto shader_path_dir = 
 		fs::current_path().root_name() /
 		fs::current_path().root_directory() / 
-		fs::path("z") /
+		fs::path("Users") /
+		fs::path("dev") /
 		fs::path("git") / 
 		fs::path("learn-opengl") / 
 		fs::path("src") / 
