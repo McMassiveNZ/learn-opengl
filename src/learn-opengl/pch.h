@@ -8,6 +8,7 @@
 #include <thread>
 #include <array>
 #include <cinttypes>
+#include <span>
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN

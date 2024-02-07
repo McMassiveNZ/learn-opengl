@@ -12,11 +12,13 @@ target_sources(
 		opengl.h
 		shader.h
 		shader.cpp
-		vert.txt
-		frag.txt
+		texture.h
+		texture.cpp
+		../../data/shaders/vert.txt
+		../../data/shaders/frag.txt
 )
 
-source_group("shaders" FILES vert.txt frag.txt)
+source_group("shaders" FILES ../../data/shaders/vert.txt ../../data/shaders/frag.txt)
 
 if(MSVC)
 	target_sources( ${current_target} PRIVATE pch.cpp )
@@ -45,7 +47,6 @@ endif()
 
 target_include_directories(${current_target} PUBLIC 
     .
-    ../log/include
     ${CMAKE_SOURCE_DIR}/external 
     ${GLM_SOURCE_DIR}
 )

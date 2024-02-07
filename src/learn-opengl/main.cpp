@@ -29,6 +29,7 @@ auto main() -> int
 	});
 		
 	auto last = std::chrono::high_resolution_clock::now();
+	float opacityStart = 0.f;
 	while (IsOpen(window))
 	{
 		PumpMessages(window);
@@ -45,6 +46,9 @@ auto main() -> int
 			const auto difference = 16ms - elapsed;
 			std::this_thread::sleep_for(difference);
 		}
+
+
+		SetOpacity(renderer, cosf(opacityStart += 0.016f));
 	}
 
 	Destroy(renderer);

@@ -19,6 +19,7 @@ concept IsOpenGL = requires(T t) {
 	ClearBuffers(t);
 	Present(t);
 	DrawScene(t);
+	SetOpacity(t, float{0.f});
 };
 
 class OpenGL
@@ -41,6 +42,8 @@ public:
 	friend void DrawScene(OpenGL& opengl) { opengl.self->DrawScene_(); }
 	friend void Destroy(const OpenGL& opengl) { opengl.self->Destroy_(); }
 
+	friend void SetOpacity(OpenGL& opengl, float opacity) { opengl.self->SetOpacity_(opacity); }
+
 private:
 	struct concept_t
 	{
@@ -50,6 +53,7 @@ private:
 		virtual void Present_() const = 0;
 		virtual void DrawScene_() = 0;
 		virtual void Destroy_() const = 0;
+		virtual void SetOpacity_(float) = 0;
 	};
 
 	template <typename T>
@@ -61,6 +65,7 @@ private:
 		virtual void Present_() const override { Present(m_data); }
 		virtual void DrawScene_() override { DrawScene(m_data); }
 		virtual void Destroy_() const override { Destroy(m_data); }
+		virtual void SetOpacity_( float opacity ) override { SetOpacity(m_data, opacity); }
 
 		T m_data;
 	};
@@ -99,5 +104,7 @@ extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLBUFFERDATAPROC glBufferData;
+extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 
 wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params);

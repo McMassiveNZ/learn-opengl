@@ -13,3 +13,7 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(${current_target})
+
+set_property(TARGET 
+    ${current_target}
+	PROPERTY FOLDER tests)

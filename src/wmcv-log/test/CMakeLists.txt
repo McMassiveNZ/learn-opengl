@@ -25,3 +25,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 
 include(GoogleTest)
 gtest_discover_tests(${current_target})
+
+set_property(TARGET 
+    ${current_target}
+	PROPERTY FOLDER tests)

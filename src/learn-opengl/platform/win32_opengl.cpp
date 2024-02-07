@@ -1,16 +1,9 @@
 #include "pch.h"
 #include "opengl.h"
 #include "shader.h"
+#include "texture.h"
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-#include <Windows.h>
+#include "wmcv_log/wmcv_log.h"
 
 namespace fs = std::filesystem;
 
@@ -22,10 +15,10 @@ static T LoadGLProc(const char* functionName)
 }
 
 #define VALIDATEGLPROC(proc) \
-if (!proc) \
-{ \
-	MessageBox(NULL, "Failed to load " #proc, "Fatal Error", MB_ICONERROR); \
-}
+	if (!proc) \
+	{ \
+		MessageBox(NULL, "Failed to load " #proc, "Fatal Error", MB_ICONERROR); \
+	}
 
 PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = nullptr;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
@@ -56,6 +49,8 @@ PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLGENBUFFERSPROC glGenBuffers = nullptr;
 PFNGLBINDBUFFERPROC glBindBuffer = nullptr;
 PFNGLBUFFERDATAPROC glBufferData = nullptr;
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap = nullptr;
+PFNGLACTIVETEXTUREPROC glActiveTexture = nullptr;
 
 namespace wmcv
 {
@@ -93,20 +88,24 @@ static void LoadGLFunctions()
 	glGenBuffers = LoadGLProc<PFNGLGENBUFFERSPROC>("glGenBuffers");
 	glBindBuffer = LoadGLProc<PFNGLBINDBUFFERPROC>("glBindBuffer");
 	glBufferData = LoadGLProc<PFNGLBUFFERDATAPROC>("glBufferData");
+
+	glGenerateMipmap = LoadGLProc<PFNGLGENERATEMIPMAPPROC>("glGenerateMipmap");
+	glActiveTexture = LoadGLProc<PFNGLACTIVETEXTUREPROC>("glActiveTexture");
 }
 
 static GLuint InitTriangleResources()
 {
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,  1.f, 0.f, 0.f,
-	   -0.5f,  0.5f, 0.0f,  0.f, 1.f, 0.f,
-		0.0f, -0.5f, 0.0f,  0.f, 0.f, 1.f
+		// positions          // colors           // texture coords
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,	  // top right
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f	  // top left
 	};
 
 	unsigned int indices[] = {
-		0, 1, 2,
-		//1, 2, 3
-	};
+		0, 1, 3,
+		1, 2, 3};
 
 	GLuint VAO;
 	glGenVertexArrays(1, &VAO);
@@ -123,14 +122,19 @@ static GLuint InitTriangleResources()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
 	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
 	return VAO;
- }
+}
 
 struct Win32OpenGLImpl final
 {
@@ -140,6 +144,11 @@ struct Win32OpenGLImpl final
 
 	GLuint VAO;
 	wmcv::Shader shaderProgram;
+
+	wmcv::Texture texture1;
+	wmcv::Texture texture2;
+
+	float mixValue;
 };
 
 void ClearBuffers(const Win32OpenGLImpl&)
@@ -155,11 +164,24 @@ void Present(const Win32OpenGLImpl& opengl)
 
 void DrawScene(Win32OpenGLImpl& opengl)
 {
-	opengl.shaderProgram.use();
+	constexpr uint32_t texture_1_slot = 0;
+	constexpr uint32_t texture_2_slot = 1;
 
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	opengl.texture1.on(texture_1_slot);
+	opengl.texture2.on(texture_2_slot);
 
-	glUseProgram(0);
+	opengl.shaderProgram.on();
+
+	opengl.shaderProgram.setInt("texture1", texture_1_slot);
+	opengl.shaderProgram.setInt("texture2", texture_2_slot);
+
+	opengl.shaderProgram.setFloat("mixValue", opengl.mixValue);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+	opengl.shaderProgram.off();
+	opengl.texture1.off();
+	opengl.texture2.off();
 }
 
 void Destroy(const Win32OpenGLImpl& opengl)
@@ -167,7 +189,13 @@ void Destroy(const Win32OpenGLImpl& opengl)
 	wglMakeCurrent(nullptr, nullptr);
 	wglDeleteContext(opengl.m_renderingContext);
 }
-} // namespace ogl_starter
+
+void SetOpacity(Win32OpenGLImpl& opengl, float opacity)
+{
+	const float shifted = (opacity * 0.5f) + 0.5f;
+	opengl.mixValue = shifted;
+}
+} // namespace wmcv
 
 wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 {
@@ -297,26 +325,39 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 
 	wmcv::LoadGLFunctions();
 
-	const auto shader_path_dir = 
+	const auto data_path_dir =
 		fs::current_path().root_name() /
-		fs::current_path().root_directory() / 
+		fs::current_path().root_directory() /
 		fs::path("Users") /
 		fs::path("dev") /
-		fs::path("git") / 
-		fs::path("learn-opengl") / 
-		fs::path("src") / 
-		fs::path("learn-opengl");
+		fs::path("git") /
+		fs::path("learn-opengl") /
+		fs::path("data");
+
+	const auto shader_path_dir =
+		data_path_dir /
+		fs::path("shaders");
 
 	const auto vs_path = (shader_path_dir / fs::path("vert.txt")).make_preferred();
 	const auto fs_path = (shader_path_dir / fs::path("frag.txt")).make_preferred();
 
-	auto result = wmcv::Win32OpenGLImpl
-	{
+	const auto texture_path_dir =
+		data_path_dir /
+		fs::path("textures");
+
+	const auto texture_path =
+		data_path_dir /
+		fs::path("textures");
+
+	auto result = wmcv::Win32OpenGLImpl{
 		.m_deviceContext = deviceContext,
 		.m_renderingContext = renderingContext,
 		.m_windowHandle = hWnd,
 		.VAO = wmcv::InitTriangleResources(),
-		.shaderProgram = wmcv::Shader(vs_path, fs_path)
+		.shaderProgram = wmcv::Shader(vs_path, fs_path),
+		.texture1 = wmcv::Texture(texture_path / fs::path("wall.jpg"), true),
+		.texture2 = wmcv::Texture(texture_path / fs::path("awesomeface.png"), true),
+		.mixValue = 0.f
 	};
 
 	return result;
