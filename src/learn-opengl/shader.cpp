@@ -99,22 +99,28 @@ void Shader::off()
 	glUseProgram(0);
 }
 
-void Shader::setBool(const std::string& name, bool value) const
+void Shader::setBool(const std::string_view name, bool value) const
 {
-	const GLint location = glGetUniformLocation(m_programId, name.c_str());
+	const GLint location = glGetUniformLocation(m_programId, name.data());
 	glUniform1i(location, static_cast<int>(value));
 }
 
-void Shader::setInt(const std::string& name, int value) const
+void Shader::setInt(const std::string_view name, int value) const
 {
-	const GLint location = glGetUniformLocation(m_programId, name.c_str());
+	const GLint location = glGetUniformLocation(m_programId, name.data());
 	glUniform1i(location, value);
 }
 
-void Shader::setFloat(const std::string& name, float value) const
+void Shader::setFloat(const std::string_view name, float value) const
 {
-	const GLint location = glGetUniformLocation(m_programId, name.c_str());
+	const GLint location = glGetUniformLocation(m_programId, name.data());
 	glUniform1f(location, value);
+}
+
+void Shader::setMat44(const std::string_view name, const glm::mat4& value)
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 }

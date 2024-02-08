@@ -19,9 +19,11 @@ struct Shader
 
 	void on();
 	void off();
-	void setBool(const std::string& name, bool value) const;
-	void setInt(const std::string& name, int value) const;
-	void setFloat(const std::string& name, float value) const;
+
+	void setBool(const std::string_view name, bool value) const;
+	void setInt(const std::string_view name, int value) const;
+	void setFloat(const std::string_view name, float value) const;
+	void setMat44(const std::string_view name, const glm::mat4& mat);
 
 	unsigned int m_programId;
 };

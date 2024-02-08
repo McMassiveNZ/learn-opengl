@@ -10,8 +10,8 @@ namespace fs = std::filesystem;
 template <typename T>
 static T LoadGLProc(const char* functionName)
 {
-	FARPROC proc = wglGetProcAddress(functionName);
-	return static_cast<T>(static_cast<void*>(proc));
+	PROC proc = wglGetProcAddress(functionName);
+	return reinterpret_cast<T>(proc);
 }
 
 #define VALIDATEGLPROC(proc) \
@@ -38,9 +38,25 @@ PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
 PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
 PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
-PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLUNIFORM2FPROC glUniform2f = nullptr;
+PFNGLUNIFORM3FPROC glUniform3f = nullptr;
 PFNGLUNIFORM4FPROC glUniform4f = nullptr;
+PFNGLUNIFORM1IPROC glUniform1i = nullptr;
+PFNGLUNIFORM2IPROC glUniform2i = nullptr;
+PFNGLUNIFORM3IPROC glUniform3i = nullptr;
+PFNGLUNIFORM4IPROC glUniform4i = nullptr;
+PFNGLUNIFORM1FVPROC glUniform1fv = nullptr;
+PFNGLUNIFORM2FVPROC glUniform2fv = nullptr;
+PFNGLUNIFORM3FVPROC glUniform3fv = nullptr;
+PFNGLUNIFORM4FVPROC glUniform4fv = nullptr;
+PFNGLUNIFORM1IVPROC glUniform1iv = nullptr;
+PFNGLUNIFORM2IVPROC glUniform2iv = nullptr;
+PFNGLUNIFORM3IVPROC glUniform3iv = nullptr;
+PFNGLUNIFORM4IVPROC glUniform4iv = nullptr;
+PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv = nullptr;
+PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv = nullptr;
+PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
@@ -75,9 +91,29 @@ static void LoadGLFunctions()
 	glGetShaderInfoLog = LoadGLProc<PFNGLGETSHADERINFOLOGPROC>("glGetShaderInfoLog");
 	glGetUniformLocation = LoadGLProc<PFNGLGETUNIFORMLOCATIONPROC>("glGetUniformLocation");
 
-	glUniform1i = LoadGLProc<PFNGLUNIFORM1IPROC>("glUniform1i");
 	glUniform1f = LoadGLProc<PFNGLUNIFORM1FPROC>("glUniform1f");
+	glUniform2f = LoadGLProc<PFNGLUNIFORM2FPROC>("glUniform2f");
+	glUniform3f = LoadGLProc<PFNGLUNIFORM3FPROC>("glUniform3f"); 
 	glUniform4f = LoadGLProc<PFNGLUNIFORM4FPROC>("glUniform4f");
+
+	glUniform1i = LoadGLProc<PFNGLUNIFORM1IPROC>("glUniform1i"); 
+	glUniform2i = LoadGLProc<PFNGLUNIFORM2IPROC>("glUniform2i"); 
+	glUniform3i = LoadGLProc<PFNGLUNIFORM3IPROC>("glUniform3i"); 
+	glUniform4i = LoadGLProc<PFNGLUNIFORM4IPROC>("glUniform4i"); 
+
+	glUniform1fv = LoadGLProc<PFNGLUNIFORM1FVPROC>("glUniform1fv");
+	glUniform2fv = LoadGLProc<PFNGLUNIFORM2FVPROC>("glUniform2fv");
+	glUniform3fv = LoadGLProc<PFNGLUNIFORM3FVPROC>("glUniform3fv");
+	glUniform4fv = LoadGLProc<PFNGLUNIFORM4FVPROC>("glUniform4fv");
+
+	glUniform1iv = LoadGLProc<PFNGLUNIFORM1IVPROC>("glUniform1iv");
+	glUniform2iv = LoadGLProc<PFNGLUNIFORM2IVPROC>("glUniform2iv");
+	glUniform3iv = LoadGLProc<PFNGLUNIFORM3IVPROC>("glUniform3iv");
+	glUniform4iv = LoadGLProc<PFNGLUNIFORM4IVPROC>("glUniform4iv");
+
+	glUniformMatrix2fv = LoadGLProc<PFNGLUNIFORMMATRIX2FVPROC>("glUniformMatrix2fv");
+	glUniformMatrix3fv = LoadGLProc<PFNGLUNIFORMMATRIX3FVPROC>("glUniformMatrix3fv");
+	glUniformMatrix4fv = LoadGLProc<PFNGLUNIFORMMATRIX4FVPROC>("glUniformMatrix4fv");
 
 	glGenVertexArrays = LoadGLProc<PFNGLGENVERTEXARRAYSPROC>("glGenVertexArrays");
 	glDeleteVertexArrays = LoadGLProc<PFNGLDELETEVERTEXARRAYSPROC>("glDeleteVertexArrays");
@@ -95,6 +131,7 @@ static void LoadGLFunctions()
 
 static GLuint InitTriangleResources()
 {
+	/*
 	float vertices[] = {
 		// positions          // colors           // texture coords
 		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,	  // top right
@@ -106,6 +143,51 @@ static GLuint InitTriangleResources()
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3};
+		*/
+
+
+	float vertices[] = {
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f};
 
 	GLuint VAO;
 	glGenVertexArrays(1, &VAO);
@@ -116,22 +198,23 @@ static GLuint InitTriangleResources()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	GLuint EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	//GLuint EBO;
+	//glGenBuffers(1, &EBO);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	// texture attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	// color attribute
+	//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	//glEnableVertexAttribArray(2);
+
 
 	return VAO;
 }
@@ -149,12 +232,15 @@ struct Win32OpenGLImpl final
 	wmcv::Texture texture2;
 
 	float mixValue;
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
 };
 
 void ClearBuffers(const Win32OpenGLImpl&)
 {
 	glClearColor(0.129f, 0.586f, 0.949f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Present(const Win32OpenGLImpl& opengl)
@@ -176,8 +262,12 @@ void DrawScene(Win32OpenGLImpl& opengl)
 	opengl.shaderProgram.setInt("texture2", texture_2_slot);
 
 	opengl.shaderProgram.setFloat("mixValue", opengl.mixValue);
+	opengl.shaderProgram.setMat44("model", opengl.model);
+	opengl.shaderProgram.setMat44("view", opengl.view);
+	opengl.shaderProgram.setMat44("proj", opengl.projection);
 
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	opengl.shaderProgram.off();
 	opengl.texture1.off();
@@ -194,6 +284,21 @@ void SetOpacity(Win32OpenGLImpl& opengl, float opacity)
 {
 	const float shifted = (opacity * 0.5f) + 0.5f;
 	opengl.mixValue = shifted;
+}
+
+void SetModelTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+{
+	opengl.model = transform;
+}
+
+void SetViewTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+{
+	opengl.view = transform;
+}
+
+void SetProjectionTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+{
+	opengl.projection = transform;
 }
 } // namespace wmcv
 
@@ -324,6 +429,8 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 	}
 
 	wmcv::LoadGLFunctions();
+
+	glEnable(GL_DEPTH_TEST);
 
 	const auto data_path_dir =
 		fs::current_path().root_name() /
