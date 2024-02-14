@@ -9,6 +9,7 @@
 #include <array>
 #include <cinttypes>
 #include <span>
+#include <algorithm>
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -18,6 +19,8 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
+#include <Windowsx.h>
+#include <hidusage.h>
 #endif
 
 #pragma warning(push)

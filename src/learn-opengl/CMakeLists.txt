@@ -1,76 +1,23 @@
-include(glm)
+cmake_minimum_required(VERSION 3.23)
 
-set(current_target learn-opengl)
-add_executable(${current_target} "" )
+project(learn-opengl VERSION 0.1.0)
 
-target_sources(
-    ${current_target}
-    PRIVATE
-		main.cpp
-		pch.h
-		window.h
-		opengl.h
-		shader.h
-		shader.cpp
-		texture.h
-		texture.cpp
-		../../data/shaders/vert.txt
-		../../data/shaders/frag.txt
-)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
-source_group("shaders" FILES ../../data/shaders/vert.txt ../../data/shaders/frag.txt)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+OPTION(ENABLE_ALL_REASONABLE_WARNINGS "Enable all possible reasonable warnings" ON )
+OPTION(ENABLE_WARNINGS_AS_ERRORS "Warnings are treated as Errors" ON)
+OPTION(ENABLE_STATIC_ANALYSIS "Enable Static Analysis Tools" OFF)
+OPTION(ENABLE_SANITIZERS "Enable Sanitizer Tools" OFF)
 
-if(MSVC)
-	target_sources( ${current_target} PRIVATE pch.cpp )
-endif()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if(MSVC)
-	target_sources( 
-        ${current_target} 
-        PRIVATE 
-			platform/win32_window.cpp
-			platform/win32_opengl.cpp
-    )
-else()
-	target_sources( 
-        ${current_target} 
-        PRIVATE 
-			platform/null_window.cpp
-			platform/null_opengl.cpp
-    )
-endif()
+include(compilerwarnings)
+include(sanitizers)
+include(staticanalysis)
+include(cpm)
 
-if(MSVC)
-target_link_libraries(${current_target} PRIVATE opengl32.lib)
-target_compile_definitions(${current_target} PUBLIC -DWMCV_PLATFORM_WINDOWS)
-endif()
-
-target_include_directories(${current_target} PUBLIC 
-    .
-    ${CMAKE_SOURCE_DIR}/external 
-    ${GLM_SOURCE_DIR}
-)
-target_precompiled_header(${current_target} pch.h pch.cpp)
-target_link_libraries(${current_target} PRIVATE wmcv-log)
-
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
-
-if( ENABLE_ALL_REASONABLE_WARNINGS )
-    MESSAGE("-- Additional Warnings Enabled")
-    target_enable_warnings(${current_target})
-endif()
-
-if( ENABLE_WARNINGS_AS_ERRORS )
-    MESSAGE("-- Warnings as Errors")
-    target_warnings_as_errors(${current_target})
-endif()
-
-if( ENABLE_SANITIZERS )
-    MESSAGE("-- Sanitizers Enabled")
-    target_enable_sanitizers(${current_target})
-endif()
-
-if( ENABLE_STATIC_ANALYSIS )
-    MESSAGE("-- Static Analysis Enabled")
-    target_enable_static_analysis(${current_target})
-endif()
+add_subdirectory(src)
+add_subdirectory(include)

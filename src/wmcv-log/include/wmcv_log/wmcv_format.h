@@ -244,6 +244,16 @@ struct Formatter<char*>
 };
 
 template <>
+struct Formatter<std::string_view>
+{
+	static void format(IFormatStream& f, std::string_view val)
+	{
+		f.push(val.data());
+	}
+};
+;
+
+template <>
 struct Formatter<std::nullptr_t>
 {
 	static void format(IFormatStream& f, std::nullptr_t)

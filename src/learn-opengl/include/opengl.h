@@ -28,6 +28,8 @@ concept IsOpenGL = requires(T t) {
 class OpenGL
 {
 public:
+	OpenGL() = default;
+
 	template <IsOpenGL T>
 	OpenGL(T&& t)
 		: self{std::make_unique<model_t<T>>(std::move(t))}
