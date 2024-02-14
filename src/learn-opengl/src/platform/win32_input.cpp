@@ -56,7 +56,7 @@ namespace wmcv
 	};
 
 
-	//https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
+	//Lifted from https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
 	static void HandleRawKeyboard(const RAWKEYBOARD& rawKB, [[maybe_unused]] Win32InputImpl& input)
 	{
 		UINT virtualKey = rawKB.VKey;
@@ -202,9 +202,9 @@ namespace wmcv
 		float y = static_cast<float>(raw_mouse.lLastY);
 		if ((raw_mouse.usFlags & MOUSE_MOVE_ABSOLUTE) == MOUSE_MOVE_ABSOLUTE)
 		{
-			const bool virtualDesktop = (raw_mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
-			const int32_t width = GetSystemMetrics(virtualDesktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
-			const int32_t height = GetSystemMetrics(virtualDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
+			const bool using_virtual_desktop = (raw_mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
+			const int32_t width = GetSystemMetrics(using_virtual_desktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
+			const int32_t height = GetSystemMetrics(using_virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
 
 			static glm::vec2 MAX = glm::vec2( std::numeric_limits<float>::max(), std::numeric_limits<float>::max() );
 			static glm::vec2 prev = MAX;
