@@ -134,47 +134,48 @@ static std::pair<GLuint, GLuint> InitGPUResources()
 	// set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
 	float vertices[] = {
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-		 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-		 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-		 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+		// positions          // normals           // texture coords
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		-0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 
-		-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-		0.5f, 0.5f,   0.5f, 1.0f, 0.0f, 0.0f,
-		0.5f, 0.5f,  -0.5f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f,
-		0.5f, 0.5f,   0.5f, 1.0f, 0.0f, 0.0f,
+		0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
 
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-		 0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-		 0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
-		 0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
-		-0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f};
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		 0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+		 0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		 0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
 
 	// first, configure the cube's VAO (and VBO)
 	unsigned int VBO, cubeVAO;
@@ -187,12 +188,16 @@ static std::pair<GLuint, GLuint> InitGPUResources()
 	glBindVertexArray(cubeVAO);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// normal attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// texcoord attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
 	unsigned int lightCubeVAO;
@@ -202,7 +207,7 @@ static std::pair<GLuint, GLuint> InitGPUResources()
 	// we only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need (it's already bound, but we do it again for educational purposes)
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	return std::make_pair(cubeVAO, lightCubeVAO);
@@ -218,6 +223,10 @@ struct Win32OpenGLImpl final
 	GLuint cubeVAO;
 	wmcv::Shader lightingShader;
 	wmcv::Shader lightCubeShader;
+	
+	wmcv::Texture diffuseMap;
+	wmcv::Texture specularMap;
+	wmcv::Texture emissionMap;
 
 	glm::mat4 model;
 	glm::mat4 view;
@@ -248,6 +257,9 @@ void DrawScene(Win32OpenGLImpl& opengl)
 {
 	// be sure to activate shader when setting uniforms/drawing objects
 	opengl.lightingShader.on();
+	opengl.lightingShader.setInt("material.diffuse", 0);
+	opengl.lightingShader.setInt("material.specular", 1);
+	opengl.lightingShader.setInt("material.emission", 2);
 	opengl.lightingShader.setVec3("viewPos", glm::vec3{opengl.viewPosition});
 
 	opengl.lightingShader.setVec3("light.position", glm::vec3{opengl.lightTransform[3]});
@@ -255,15 +267,18 @@ void DrawScene(Win32OpenGLImpl& opengl)
 	opengl.lightingShader.setVec3("light.diffuse", opengl.lightColor * glm::vec3{.5f});
 	opengl.lightingShader.setVec3("light.specular", glm::vec3{1.f});
 
-	opengl.lightingShader.setVec3("material.ambient", glm::vec3{1.f, 0.5f, 0.31f});
-	opengl.lightingShader.setVec3("material.diffuse", glm::vec3{1.f, 0.5f, 0.31f});
-	opengl.lightingShader.setVec3("material.specular", glm::vec3{1.f, 0.5f, 0.31f});
-	opengl.lightingShader.setFloat("material.shininess", 32.f);
+	opengl.lightingShader.setVec3("material.specular", glm::vec3{.5f});
+	opengl.lightingShader.setFloat("material.shininess", 64.f);
 
 	// view/projection transformations
 	opengl.lightingShader.setMat4("projection", opengl.projection);
 	opengl.lightingShader.setMat4("view", opengl.view);
 	opengl.lightingShader.setMat4("model", opengl.model);
+
+	//bind diffuse and specular map
+	opengl.diffuseMap.on(0);
+	opengl.specularMap.on(1);
+	opengl.emissionMap.on(2);
 
 	// render the cube
 	glBindVertexArray(opengl.cubeVAO);
@@ -477,6 +492,14 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 	const auto light_vs_path = (shader_path_dir / fs::path("light_cube.vs")).make_preferred();
 	const auto light_fs_path = (shader_path_dir / fs::path("light_cube.fs")).make_preferred();
 
+	const auto texture_path_dir =
+		data_path_dir /
+		fs::path("textures");
+
+	const auto diffuse_map_path = (texture_path_dir / fs::path("container2_diffuse.png"));
+	const auto specular_map_path = (texture_path_dir / fs::path("container2_specular.png"));
+	const auto emission_map_path = (texture_path_dir / fs::path("matrix.jpg"));
+
 	auto [cubeVAO, lightVAO] = wmcv::InitGPUResources();
 
 	auto result = wmcv::Win32OpenGLImpl{
@@ -487,6 +510,9 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 		.cubeVAO = cubeVAO,
 		.lightingShader = wmcv::Shader(cube_vs_path, cube_fs_path),
 		.lightCubeShader = wmcv::Shader(light_vs_path, light_fs_path),
+		.diffuseMap = wmcv::Texture(diffuse_map_path, false),
+		.specularMap = wmcv::Texture(specular_map_path, false),
+		.emissionMap = wmcv::Texture(emission_map_path, false),
 	};
 
 	return result;
