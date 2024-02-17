@@ -33,6 +33,9 @@ public:
 		return glm::lookAt(eye, at, up);
 	}
 
+	inline float zoom() const { return m_zoom; }
+	inline glm::vec3 position() const { return m_position; }
+
 	void applyCameraMovement(Camera_Movement direction, float dt);
 	void applyCameraLook(float yaw, float pitch);
 	void applyCameraZoom(float zoom);

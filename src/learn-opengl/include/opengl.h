@@ -19,10 +19,13 @@ concept IsOpenGL = requires(T t) {
 	ClearBuffers(t);
 	Present(t);
 	DrawScene(t);
-	SetOpacity(t, float{0.f});
-	SetModelTransform(t, glm::mat4{0.f});
-	SetViewTransform(t, glm::mat4{0.f});
-	SetProjectionTransform(t, glm::mat4{0.f});
+	SetClearColor(t, float{}, float{}, float{}),
+	SetOpacity(t, float{});
+	SetModelTransform(t, glm::mat4{});
+	SetViewTransform(t, glm::mat4{});
+	SetProjectionTransform(t, glm::mat4{});
+	SetLightTransform(t, glm::mat4{});
+	SetViewPosition(t, glm::vec3{});
 };
 
 class OpenGL
@@ -46,11 +49,15 @@ public:
 	friend void Present(const OpenGL& opengl) { opengl.self->Present_(); }
 	friend void DrawScene(OpenGL& opengl) { opengl.self->DrawScene_(); }
 	friend void Destroy(const OpenGL& opengl) { opengl.self->Destroy_(); }
+	friend void SetClearColor(OpenGL& opengl, float r, float g, float b) { opengl.self->SetClearColor_(r, g, b); }
 
 	friend void SetOpacity(OpenGL& opengl, float opacity) { opengl.self->SetOpacity_(opacity); }
 	friend void SetModelTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetModelTransform_(transform); }
 	friend void SetViewTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetViewTransform_(transform); }
 	friend void SetProjectionTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetProjectionTransform_(transform); }
+
+	friend void SetLightTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetLightTransform_(transform); }
+	friend void SetViewPosition(OpenGL& opengl, const glm::vec3& pos) { opengl.self->SetViewPosition_(pos); }
 
 private:
 	struct concept_t
@@ -61,10 +68,13 @@ private:
 		virtual void Present_() const = 0;
 		virtual void DrawScene_() = 0;
 		virtual void Destroy_() const = 0;
+		virtual void SetClearColor_(float, float, float) = 0;
 		virtual void SetOpacity_(float) = 0;
 		virtual void SetModelTransform_(const glm::mat4&) = 0;
 		virtual void SetViewTransform_(const glm::mat4&) = 0;
 		virtual void SetProjectionTransform_(const glm::mat4&) = 0;
+		virtual void SetLightTransform_(const glm::mat4&) = 0;
+		virtual void SetViewPosition_(const glm::vec3&) = 0;
 	};
 
 	template <typename T>
@@ -76,11 +86,14 @@ private:
 		virtual void Present_() const override { Present(m_data); }
 		virtual void DrawScene_() override { DrawScene(m_data); }
 		virtual void Destroy_() const override { Destroy(m_data); }
+		virtual void SetClearColor_(float r, float g, float b) { SetClearColor(m_data, r, g, b); }
 
 		virtual void SetOpacity_( float opacity ) override { SetOpacity(m_data, opacity); }
 		virtual void SetModelTransform_( const glm::mat4& transform ) override { SetModelTransform(m_data, transform); }
 		virtual void SetViewTransform_( const glm::mat4& transform ) override { SetViewTransform(m_data, transform); }
 		virtual void SetProjectionTransform_( const glm::mat4& transform ) override { SetProjectionTransform(m_data, transform); }
+		virtual void SetLightTransform_( const glm::mat4& transform ) override { SetLightTransform(m_data, transform); }
+		virtual void SetViewPosition_(const glm::vec3& pos) override { SetViewPosition(m_data, pos); }
 
 		T m_data;
 	};

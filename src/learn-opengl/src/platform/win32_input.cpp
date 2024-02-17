@@ -245,8 +245,6 @@ namespace wmcv
 				{
 					const auto eventType = down ? InputEventType::MouseDown : InputEventType::MouseUp;
 					input.events.emplace_back(key, eventType);
-
-					wmcv::LogMessage("Mouse Button {}\n", down ? "Down" : "Up");
 				}
 			}
 		};

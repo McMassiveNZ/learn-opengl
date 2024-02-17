@@ -36,6 +36,7 @@ Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::p
 	}
 	catch (std::ifstream::failure e)
 	{
+		DebugBreak();
 		wmcv::LogMessage("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
 	}
 
@@ -55,6 +56,7 @@ Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::p
 	{
 		glGetShaderInfoLog(vertex, 512, NULL, infoLog);
 		wmcv::LogMessage("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", infoLog); 
+		DebugBreak();
 	};
 
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
@@ -66,6 +68,7 @@ Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::p
 	{
 		glGetShaderInfoLog(fragment, 512, NULL, infoLog);
 		wmcv::LogMessage("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}", infoLog); 
+		DebugBreak();
 	};
 
 	m_programId = glCreateProgram();
@@ -78,6 +81,7 @@ Shader::Shader(const std::filesystem::path& vertexPath, const std::filesystem::p
 	{
 		glGetProgramInfoLog(m_programId, 512, NULL, infoLog);
 		wmcv::LogMessage("ERROR::SHADER::PROGRAM::LINKING_FAILED\n{}", infoLog);
+		DebugBreak();
 	}
 
 	glDeleteShader(vertex);
@@ -117,7 +121,37 @@ void Shader::setFloat(const std::string_view name, float value) const
 	glUniform1f(location, value);
 }
 
-void Shader::setMat44(const std::string_view name, const glm::mat4& value)
+void Shader::setVec2(const std::string_view name, glm::vec2 value) const
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniform2fv(location, 1, glm::value_ptr(value));
+}
+
+void Shader::setVec3(const std::string_view name, glm::vec3 value) const
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniform3fv(location, 1, glm::value_ptr(value));
+}
+
+void Shader::setVec4(const std::string_view name, glm::vec4 value) const
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniform4fv(location, 1, glm::value_ptr(value));
+}
+
+void Shader::setMat2(const std::string_view name, const glm::mat2& value)
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::setMat3(const std::string_view name, const glm::mat3& value)
+{
+	const GLint location = glGetUniformLocation(m_programId, name.data());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::setMat4(const std::string_view name, const glm::mat4& value)
 {
 	const GLint location = glGetUniformLocation(m_programId, name.data());
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));

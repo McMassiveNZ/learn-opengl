@@ -7,6 +7,7 @@ namespace wmcv
 {
 Clock::Clock()
 	: m_start(system_clock::now())
+	, m_last(m_start)
 {
 }
 

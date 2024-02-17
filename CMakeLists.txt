@@ -14,6 +14,9 @@ OPTION(ENABLE_STATIC_ANALYSIS "Enable Static Analysis Tools" OFF)
 OPTION(ENABLE_SANITIZERS "Enable Sanitizer Tools" OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+set(DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/data)
+set(SHADERS_DIR ${DATA_DIR}/shaders)
+set(TEXTURES_DIR ${DATA_DIR}/textures)
 
 include(compilerwarnings)
 include(sanitizers)

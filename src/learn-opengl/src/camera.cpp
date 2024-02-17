@@ -5,8 +5,8 @@ namespace wmcv
 {
 
 Camera::Camera()
-	: m_position(0.f, 0.f, -3.f)
-	, m_front(0.f, 0.f, -1.f)
+	: m_position(0.f, 0.f, 3.f)
+	, m_front(0.f, 0.f, 1.f)
 	, m_up{}
 	, m_right{}
 	, m_worldUp(0.f, 1.f, 0.f)

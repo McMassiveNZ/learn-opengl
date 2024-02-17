@@ -12,32 +12,6 @@
 
 namespace wmcv
 {
-	static std::array<glm::vec3, 10 > cubePositions = {
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, 5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f, 3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f, 2.0f, -2.5f),
-		glm::vec3(1.5f, 0.2f, -1.5f),
-		glm::vec3(-1.3f, 1.0f, -1.5f)
-	};
-	
-	static std::array<glm::mat4, 10 > cubeMatrices = {
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>(),
-		glm::identity<glm::mat4>()
-	};
-
 	class Win32ApplicationImpl final : public IApplication
 	{
 	public:
@@ -55,6 +29,9 @@ namespace wmcv
 		InputPtr  m_input;
 		Clock m_clock;
 
+		glm::mat4 model;
+		glm::mat4 light;
+
 		Camera camera;
 		bool forward = false;
 		bool backward = false;
@@ -62,6 +39,8 @@ namespace wmcv
 		bool right = false;
 		bool up = false;
 		bool down = false;
+
+		float lightSpeed = 50.f;
 	};
 
 	int Win32ApplicationImpl::run()
@@ -106,8 +85,9 @@ namespace wmcv
 
 		m_window->PushSink(m_input.get());
 
-		const auto perspective = glm::perspective(glm::radians(45.f), 800.f / 600.f, 0.01f, 1000.f);
+		const auto perspective = glm::perspective(camera.zoom(), 800.f / 600.f, 0.01f, 1000.f);
 		SetProjectionTransform(m_renderer, perspective);
+		SetClearColor(m_renderer, 0.1f, 0.1f, 0.1f);
 
 		return true;
 	}
@@ -194,17 +174,11 @@ namespace wmcv
 		if (down)
 			camera.applyCameraMovement(Camera_Movement::DOWN, delta);
 
-		for ( uint32_t i = 0; i < cubeMatrices.size(); ++i)
-		{
-			auto& model = cubeMatrices[i];
-			const auto& pos = cubePositions[i];
-
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, pos);
-			float angle = 20.0f * i;
-			model = glm::rotate(model, m_clock.elapsed() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			SetModelTransform(m_renderer, model);
-		}
+		light = glm::identity<glm::mat4>();
+		light = glm::rotate(light, glm::radians(m_clock.elapsed() * lightSpeed), glm::vec3{0.f, 1.f, 0.f});
+		light = glm::translate(light, glm::vec3{1.2f, 1.f, 2.f});
+		light = glm::scale(light, glm::vec3{0.2f});
+		model = glm::identity<glm::mat4>();
 	}
 
 	void Win32ApplicationImpl::draw()
@@ -213,12 +187,10 @@ namespace wmcv
 
 		SetOpacity(m_renderer, 0.2f);
 		SetViewTransform(m_renderer, camera.buildViewMatrix());
-
-		for (const glm::mat4& model : cubeMatrices)
-		{
-			SetModelTransform(m_renderer, model);
-			DrawScene(m_renderer);
-		}
+		SetModelTransform(m_renderer, model);
+		SetLightTransform(m_renderer, light);
+		SetViewPosition(m_renderer, camera.position());
+		DrawScene(m_renderer);
 
 		Present(m_renderer);
 	}

@@ -36,10 +36,20 @@ endif()
 target_include_directories(
     ${current_target} 
         PUBLIC 
-			.
+            .
 			${CMAKE_SOURCE_DIR}/external 
 			${GLM_SOURCE_DIR}
 )
+
+set(SHADERS)
+list(APPEND SHADERS
+    ${SHADERS_DIR}/cube.vs
+    ${SHADERS_DIR}/cube.fs
+    ${SHADERS_DIR}/light.vs
+    ${SHADERS_DIR}/light.fs
+)
+source_group(shaders FILES ${SHADERS})
+target_sources(${current_target} PRIVATE ${SHADERS})
 
 target_precompile_headers(${current_target} PRIVATE pch.h pch.cpp)
 target_link_libraries(${current_target} PRIVATE wmcv-log)
