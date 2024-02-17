@@ -57,6 +57,7 @@ public:
 	friend void SetProjectionTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetProjectionTransform_(transform); }
 
 	friend void SetLightTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetLightTransform_(transform); }
+	friend void SetLightColor(OpenGL& opengl, const glm::vec3& color) { opengl.self->SetLightColor_(color); }
 	friend void SetViewPosition(OpenGL& opengl, const glm::vec3& pos) { opengl.self->SetViewPosition_(pos); }
 
 private:
@@ -73,7 +74,9 @@ private:
 		virtual void SetModelTransform_(const glm::mat4&) = 0;
 		virtual void SetViewTransform_(const glm::mat4&) = 0;
 		virtual void SetProjectionTransform_(const glm::mat4&) = 0;
+
 		virtual void SetLightTransform_(const glm::mat4&) = 0;
+		virtual void SetLightColor_(const glm::vec3&) = 0;
 		virtual void SetViewPosition_(const glm::vec3&) = 0;
 	};
 
@@ -93,6 +96,7 @@ private:
 		virtual void SetViewTransform_( const glm::mat4& transform ) override { SetViewTransform(m_data, transform); }
 		virtual void SetProjectionTransform_( const glm::mat4& transform ) override { SetProjectionTransform(m_data, transform); }
 		virtual void SetLightTransform_( const glm::mat4& transform ) override { SetLightTransform(m_data, transform); }
+		virtual void SetLightColor_(const glm::vec3& color) override { SetLightColor(m_data, color); }
 		virtual void SetViewPosition_(const glm::vec3& pos) override { SetViewPosition(m_data, pos); }
 
 		T m_data;

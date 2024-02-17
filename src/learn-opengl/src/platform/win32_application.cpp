@@ -12,6 +12,13 @@
 
 namespace wmcv
 {
+	struct Light
+	{
+		glm::mat4 transform;
+		glm::vec3 color;
+		float speed;
+	};
+
 	class Win32ApplicationImpl final : public IApplication
 	{
 	public:
@@ -30,7 +37,6 @@ namespace wmcv
 		Clock m_clock;
 
 		glm::mat4 model;
-		glm::mat4 light;
 
 		Camera camera;
 		bool forward = false;
@@ -40,7 +46,7 @@ namespace wmcv
 		bool up = false;
 		bool down = false;
 
-		float lightSpeed = 50.f;
+		Light light;
 	};
 
 	int Win32ApplicationImpl::run()
@@ -82,12 +88,15 @@ namespace wmcv
 		});
 
 		m_input = wmcv::Input::Create();
-
 		m_window->PushSink(m_input.get());
+
+		light.color = glm::vec3{1.f};
+		light.speed = 50.f;
 
 		const auto perspective = glm::perspective(camera.zoom(), 800.f / 600.f, 0.01f, 1000.f);
 		SetProjectionTransform(m_renderer, perspective);
 		SetClearColor(m_renderer, 0.1f, 0.1f, 0.1f);
+		SetLightColor(m_renderer, glm::vec3{1.f});
 
 		return true;
 	}
@@ -174,11 +183,18 @@ namespace wmcv
 		if (down)
 			camera.applyCameraMovement(Camera_Movement::DOWN, delta);
 
-		light = glm::identity<glm::mat4>();
-		light = glm::rotate(light, glm::radians(m_clock.elapsed() * lightSpeed), glm::vec3{0.f, 1.f, 0.f});
-		light = glm::translate(light, glm::vec3{1.2f, 1.f, 2.f});
-		light = glm::scale(light, glm::vec3{0.2f});
 		model = glm::identity<glm::mat4>();
+
+		light.transform = glm::identity<glm::mat4>();
+		light.transform = glm::rotate(light.transform, glm::radians(m_clock.elapsed() * light.speed), glm::vec3{0.f, 1.f, 0.f});
+		light.transform = glm::translate(light.transform, glm::vec3{1.2f, 1.f, 2.f});
+		light.transform = glm::scale(light.transform, glm::vec3{0.2f});
+		light.speed = 50.f;
+		light.color = glm::vec3{
+			sinf(m_clock.elapsed() * 2.0f),
+			sinf(m_clock.elapsed() * 0.7f),
+			sinf(m_clock.elapsed() * 1.3f),
+		};
 	}
 
 	void Win32ApplicationImpl::draw()
@@ -188,7 +204,8 @@ namespace wmcv
 		SetOpacity(m_renderer, 0.2f);
 		SetViewTransform(m_renderer, camera.buildViewMatrix());
 		SetModelTransform(m_renderer, model);
-		SetLightTransform(m_renderer, light);
+		SetLightTransform(m_renderer, light.transform);
+		SetLightColor(m_renderer, light.color);
 		SetViewPosition(m_renderer, camera.position());
 		DrawScene(m_renderer);
 

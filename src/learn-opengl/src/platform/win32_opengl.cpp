@@ -224,6 +224,7 @@ struct Win32OpenGLImpl final
 	glm::mat4 projection;
 
 	glm::mat4 lightTransform;
+	glm::vec3 lightColor;
 	glm::vec3 viewPosition;
 
 	float mixValue;
@@ -247,10 +248,17 @@ void DrawScene(Win32OpenGLImpl& opengl)
 {
 	// be sure to activate shader when setting uniforms/drawing objects
 	opengl.lightingShader.on();
-	opengl.lightingShader.setVec3("objectColor", glm::vec3{1.0f, 0.5f, 0.31f});
-	opengl.lightingShader.setVec3("lightColor", glm::vec3{1.0f, 1.0f, 1.0f});
-	opengl.lightingShader.setVec3("lightPos", glm::vec3{opengl.lightTransform[3]});
 	opengl.lightingShader.setVec3("viewPos", glm::vec3{opengl.viewPosition});
+
+	opengl.lightingShader.setVec3("light.position", glm::vec3{opengl.lightTransform[3]});
+	opengl.lightingShader.setVec3("light.ambient", opengl.lightColor * glm::vec3{.2f});
+	opengl.lightingShader.setVec3("light.diffuse", opengl.lightColor * glm::vec3{.5f});
+	opengl.lightingShader.setVec3("light.specular", glm::vec3{1.f});
+
+	opengl.lightingShader.setVec3("material.ambient", glm::vec3{1.f, 0.5f, 0.31f});
+	opengl.lightingShader.setVec3("material.diffuse", glm::vec3{1.f, 0.5f, 0.31f});
+	opengl.lightingShader.setVec3("material.specular", glm::vec3{1.f, 0.5f, 0.31f});
+	opengl.lightingShader.setFloat("material.shininess", 32.f);
 
 	// view/projection transformations
 	opengl.lightingShader.setMat4("projection", opengl.projection);
@@ -308,6 +316,11 @@ void SetProjectionTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
 void SetLightTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
 {
 	opengl.lightTransform = transform;
+}
+
+void SetLightColor(Win32OpenGLImpl& opengl, const glm::vec3& color)
+{
+	opengl.lightColor = color;
 }
 
 void SetViewPosition(Win32OpenGLImpl& opengl, const glm::vec3& position)
