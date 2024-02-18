@@ -189,11 +189,11 @@ namespace wmcv
 		light.transform = glm::translate(light.transform, glm::vec3{1.2f, 1.f, 2.f});
 		light.transform = glm::scale(light.transform, glm::vec3{0.2f});
 		light.speed = 50.f;
-		//light.color = glm::vec3{
-		//	sinf(m_clock.elapsed() * 2.0f),
-		//	sinf(m_clock.elapsed() * 0.7f),
-		//	sinf(m_clock.elapsed() * 1.3f),
-		//};
+		light.color = glm::vec3{
+			sinf(m_clock.elapsed() * 2.0f),
+			sinf(m_clock.elapsed() * 0.7f),
+			sinf(m_clock.elapsed() * 1.3f),
+		};
 
 		m_renderer->SetCamera(&camera);
 	}

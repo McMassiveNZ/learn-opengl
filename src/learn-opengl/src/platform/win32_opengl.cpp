@@ -72,7 +72,7 @@ PFNGLACTIVETEXTUREPROC glActiveTexture = nullptr;
 namespace wmcv
 {
 
-static glm::vec3 cubePositions[] = {
+static std::array<glm::vec3, 10> cubePositions = {
 	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(2.0f, 5.0f, -15.0f),
 	glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -83,6 +83,13 @@ static glm::vec3 cubePositions[] = {
 	glm::vec3(1.5f, 2.0f, -2.5f),
 	glm::vec3(1.5f, 0.2f, -1.5f),
 	glm::vec3(-1.3f, 1.0f, -1.5f)
+};
+
+static std::array<glm::vec3, 4> pointLightPositions = {
+	glm::vec3(0.7f, 0.2f, 2.0f),
+	glm::vec3(2.3f, -3.3f, -4.0f),
+	glm::vec3(-4.0f, 2.0f, -12.0f),
+	glm::vec3(0.0f, 0.0f, -3.0f)
 };
 
 static void LoadGLFunctions()
@@ -336,22 +343,46 @@ void Win32OpenGLImpl::DrawScene()
 	lightingShader.setInt("material.specular", 1);
 	//lightingShader.setInt("material.emission", 2);
 
-	//lightingShader.setVec3("light.position", glm::vec3{lightTransform[3]});
-	//lightingShader.setVec3("light.direction", glm::vec3{-.2f, -1.f, -.3f});
-	lightingShader.setVec3("light.position", camera->position());
-	lightingShader.setVec3("light.direction", camera->front());
-	lightingShader.setFloat("light.cutoff", glm::cos(glm::radians(12.5f)));
-	lightingShader.setFloat("light.outerCutoff", glm::cos(glm::radians(17.5f)));
+	//directional light
+	lightingShader.setVec3("dirLight.direction", glm::vec3{-0.2f, -1.f, -0.3f});
+	lightingShader.setVec3("dirLight.ambient", glm::vec3{.05f});
+	lightingShader.setVec3("dirLight.diffuse", glm::vec3{.4f});
+	lightingShader.setVec3("dirLight.specular", glm::vec3{0.5f});
+
+	//point lights
+	for (size_t i = 0; i < pointLightPositions.size(); ++i)
+	{
+		auto direction = std::stringstream() << "pointLights[" << i << "].position";
+		auto ambient = std::stringstream() << "pointLights[" << i << "].ambient";
+		auto diffuse = std::stringstream() << "pointLights[" << i << "].diffuse";
+		auto specular = std::stringstream() << "pointLights[" << i << "].specular";
+		auto constant = std::stringstream() << "pointLights[" << i << "].constant";
+		auto linear = std::stringstream() << "pointLights[" << i << "].linear";
+		auto quadratic = std::stringstream() << "pointLights[" << i << "].quadratic";
+
+		lightingShader.setVec3(direction.str().c_str(), pointLightPositions[i]);
+		lightingShader.setVec3(ambient.str().c_str(), lightColor * glm::vec3{.05f});
+		lightingShader.setVec3(diffuse.str().c_str(), lightColor * glm::vec3{.8f});
+		lightingShader.setVec3(specular.str().c_str(), glm::vec3{1.f});
+		lightingShader.setFloat(constant.str().c_str(), 1.f);
+		lightingShader.setFloat(linear.str().c_str(), 0.09f);
+		lightingShader.setFloat(quadratic.str().c_str(), 0.032f);
+
+	}
+
+	lightingShader.setVec3("spotLight.position", camera->position());
+	lightingShader.setVec3("spotLight.direction", camera->front());
+	lightingShader.setVec3("spotLight.ambient", glm::vec3{0.05f});
+	lightingShader.setVec3("spotLight.diffuse", glm::vec3{0.8f});
+	lightingShader.setVec3("spotLight.specular", glm::vec3{1.0f});
+	lightingShader.setFloat("spotLight.constant", 1.0f);
+	lightingShader.setFloat("spotLight.linear", 0.09f);
+	lightingShader.setFloat("spotLight.quadratic", 0.032f);
+	lightingShader.setFloat("spotLight.innerRadius", glm::cos(glm::radians(12.5f)));
+	lightingShader.setFloat("spotLight.outerRadius", glm::cos(glm::radians(17.5f)));
+
 	lightingShader.setVec3("viewPos", camera->position());
-
-	lightingShader.setVec3("light.ambient", lightColor * glm::vec3{.1f});
-	lightingShader.setVec3("light.diffuse", lightColor * glm::vec3{.8f});
-	lightingShader.setVec3("light.specular", glm::vec3{1.f});
-	lightingShader.setFloat("light.constant", 1.f);
-	lightingShader.setFloat("light.linear", 0.9f);
-	lightingShader.setFloat("light.quadratic", 0.032f);
-
-	lightingShader.setFloat("material.shininess", 64.f);
+	lightingShader.setFloat("material.shininess", 32.f);
 
 	// view/projection transformations
 	lightingShader.setMat4("projection", projection);
@@ -366,7 +397,6 @@ void Win32OpenGLImpl::DrawScene()
 	// render the cube
 	glBindVertexArray(cubeVAO);
 
-
 	for (unsigned int i = 0; i < 10; i++)
 	{
 		model = glm::mat4(1.0f);
@@ -379,13 +409,18 @@ void Win32OpenGLImpl::DrawScene()
 	}
 
 	// also draw the lamp object
-	//lightCubeShader.on();
-	//lightCubeShader.setMat4("projection", projection);
-	//lightCubeShader.setMat4("view", view);
-	//lightCubeShader.setMat4("model", lightTransform);
+	lightCubeShader.on();
+	glBindVertexArray(lightVAO);
+	lightCubeShader.setMat4("projection", projection);
+	lightCubeShader.setMat4("view", view);
 
-	//glBindVertexArray(lightVAO);
-	//glDrawArrays(GL_TRIANGLES, 0, 36);
+	for (const auto& lightPos : pointLightPositions)
+	{
+		lightTransform = glm::translate(glm::identity<glm::mat4>(), lightPos);
+		lightTransform = glm::scale(lightTransform, glm::vec3{0.2f});
+		lightCubeShader.setMat4("model", lightTransform);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 }
 
 void Win32OpenGLImpl::Destroy()
