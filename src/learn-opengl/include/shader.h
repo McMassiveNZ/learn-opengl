@@ -9,6 +9,7 @@ namespace wmcv
 
 struct Shader
 {
+	Shader() = default;
 	Shader(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath);
 	~Shader();
 

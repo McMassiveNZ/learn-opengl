@@ -7,6 +7,8 @@
 namespace wmcv
 {
 
+class Camera;
+
 struct OpenGLCreateParams
 {
 	void* nativeWindowHandle;
@@ -14,96 +16,34 @@ struct OpenGLCreateParams
 	int versionMinor;
 };
 
-template <typename T>
-concept IsOpenGL = requires(T t) {
-	ClearBuffers(t);
-	Present(t);
-	DrawScene(t);
-	SetClearColor(t, float{}, float{}, float{}),
-	SetOpacity(t, float{});
-	SetModelTransform(t, glm::mat4{});
-	SetViewTransform(t, glm::mat4{});
-	SetProjectionTransform(t, glm::mat4{});
-	SetLightTransform(t, glm::mat4{});
-	SetViewPosition(t, glm::vec3{});
-};
+using RenderCommand = std::function<void()>;
 
 class OpenGL
 {
 public:
-	OpenGL() = default;
+	virtual ~OpenGL() = default;
 
-	template <IsOpenGL T>
-	OpenGL(T&& t)
-		: self{std::make_unique<model_t<T>>(std::move(t))}
-	{
-	}
+	virtual void ClearBuffers() = 0;
+	virtual void Present() = 0;
+	virtual void DrawScene() = 0;
+	virtual void Destroy() = 0;
+	virtual void SetClearColor(float, float, float) = 0;
+	virtual void PushCommand(RenderCommand&&) = 0;
 
-	~OpenGL() = default;
-	OpenGL(OpenGL&&) = default;
-	OpenGL& operator=(OpenGL&&) = default;
-	OpenGL(const OpenGL&) = delete;
-	OpenGL operator=(const OpenGL&) = delete;
+	virtual void SetOpacity(float) = 0;
+	virtual void SetModelTransform(const glm::mat4&) = 0;
+	virtual void SetViewTransform(const glm::mat4&) = 0;
+	virtual void SetProjectionTransform(const glm::mat4&) = 0;
 
-	friend void ClearBuffers(const OpenGL& opengl) { opengl.self->ClearBuffers_(); }
-	friend void Present(const OpenGL& opengl) { opengl.self->Present_(); }
-	friend void DrawScene(OpenGL& opengl) { opengl.self->DrawScene_(); }
-	friend void Destroy(const OpenGL& opengl) { opengl.self->Destroy_(); }
-	friend void SetClearColor(OpenGL& opengl, float r, float g, float b) { opengl.self->SetClearColor_(r, g, b); }
+	virtual void SetLightTransform(const glm::mat4&) = 0;
+	virtual void SetLightColor(const glm::vec3&) = 0;
 
-	friend void SetOpacity(OpenGL& opengl, float opacity) { opengl.self->SetOpacity_(opacity); }
-	friend void SetModelTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetModelTransform_(transform); }
-	friend void SetViewTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetViewTransform_(transform); }
-	friend void SetProjectionTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetProjectionTransform_(transform); }
+	virtual void SetCamera(Camera*) = 0;
 
-	friend void SetLightTransform(OpenGL& opengl, const glm::mat4& transform) { opengl.self->SetLightTransform_(transform); }
-	friend void SetLightColor(OpenGL& opengl, const glm::vec3& color) { opengl.self->SetLightColor_(color); }
-	friend void SetViewPosition(OpenGL& opengl, const glm::vec3& pos) { opengl.self->SetViewPosition_(pos); }
-
-private:
-	struct concept_t
-	{
-		virtual ~concept_t() = default;
-
-		virtual void ClearBuffers_() const = 0;
-		virtual void Present_() const = 0;
-		virtual void DrawScene_() = 0;
-		virtual void Destroy_() const = 0;
-		virtual void SetClearColor_(float, float, float) = 0;
-		virtual void SetOpacity_(float) = 0;
-		virtual void SetModelTransform_(const glm::mat4&) = 0;
-		virtual void SetViewTransform_(const glm::mat4&) = 0;
-		virtual void SetProjectionTransform_(const glm::mat4&) = 0;
-
-		virtual void SetLightTransform_(const glm::mat4&) = 0;
-		virtual void SetLightColor_(const glm::vec3&) = 0;
-		virtual void SetViewPosition_(const glm::vec3&) = 0;
-	};
-
-	template <typename T>
-	struct model_t final : concept_t
-	{
-		model_t(T&& data) : m_data(std::move(data)) {}
-
-		virtual void ClearBuffers_() const override { ClearBuffers(m_data); }
-		virtual void Present_() const override { Present(m_data); }
-		virtual void DrawScene_() override { DrawScene(m_data); }
-		virtual void Destroy_() const override { Destroy(m_data); }
-		virtual void SetClearColor_(float r, float g, float b) { SetClearColor(m_data, r, g, b); }
-
-		virtual void SetOpacity_( float opacity ) override { SetOpacity(m_data, opacity); }
-		virtual void SetModelTransform_( const glm::mat4& transform ) override { SetModelTransform(m_data, transform); }
-		virtual void SetViewTransform_( const glm::mat4& transform ) override { SetViewTransform(m_data, transform); }
-		virtual void SetProjectionTransform_( const glm::mat4& transform ) override { SetProjectionTransform(m_data, transform); }
-		virtual void SetLightTransform_( const glm::mat4& transform ) override { SetLightTransform(m_data, transform); }
-		virtual void SetLightColor_(const glm::vec3& color) override { SetLightColor(m_data, color); }
-		virtual void SetViewPosition_(const glm::vec3& pos) override { SetViewPosition(m_data, pos); }
-
-		T m_data;
-	};
-
-	std::unique_ptr<concept_t> self;
+	static std::unique_ptr<OpenGL> Create( OpenGLCreateParams params );
 };
+
+using OpenGLPtr = std::unique_ptr<OpenGL>;
 
 } // namespace ogl_starter
 
@@ -154,5 +94,3 @@ extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLBUFFERDATAPROC glBufferData;
 extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
-
-wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params);

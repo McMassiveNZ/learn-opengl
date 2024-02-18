@@ -2,6 +2,7 @@
 #include "opengl.h"
 #include "shader.h"
 #include "texture.h"
+#include "camera.h"
 
 #include "wmcv_log/wmcv_log.h"
 
@@ -70,6 +71,19 @@ PFNGLACTIVETEXTUREPROC glActiveTexture = nullptr;
 
 namespace wmcv
 {
+
+static glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(2.0f, 5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f, 3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f, 2.0f, -2.5f),
+	glm::vec3(1.5f, 0.2f, -1.5f),
+	glm::vec3(-1.3f, 1.0f, -1.5f)
+};
 
 static void LoadGLFunctions()
 {
@@ -213,11 +227,32 @@ static std::pair<GLuint, GLuint> InitGPUResources()
 	return std::make_pair(cubeVAO, lightCubeVAO);
 }
 
-struct Win32OpenGLImpl final
+struct Win32OpenGLImpl final : public OpenGL
 {
+	Win32OpenGLImpl(HDC hdc, HGLRC rc, HWND hwnd);
+
+	virtual void ClearBuffers();
+	virtual void Present();
+	virtual void DrawScene();
+	virtual void Destroy();
+	virtual void SetClearColor(float, float, float);
+	virtual void PushCommand(RenderCommand&& cmd);
+
+	virtual void SetOpacity(float);
+	virtual void SetModelTransform(const glm::mat4&);
+	virtual void SetViewTransform(const glm::mat4&);
+	virtual void SetProjectionTransform(const glm::mat4&);
+
+	virtual void SetLightTransform(const glm::mat4&);
+	virtual void SetLightColor(const glm::vec3&);
+	virtual void SetCamera(Camera*);
+
 	HDC m_deviceContext;
 	HGLRC m_renderingContext;
 	HWND m_windowHandle;
+
+	std::queue<RenderCommand> m_commands;
+	Camera* camera;
 
 	GLuint lightVAO;
 	GLuint cubeVAO;
@@ -234,7 +269,6 @@ struct Win32OpenGLImpl final
 
 	glm::mat4 lightTransform;
 	glm::vec3 lightColor;
-	glm::vec3 viewPosition;
 
 	float mixValue;
 
@@ -242,109 +276,173 @@ struct Win32OpenGLImpl final
 	float r, g, b;
 };
 
-void ClearBuffers(const Win32OpenGLImpl& opengl)
+Win32OpenGLImpl::Win32OpenGLImpl(HDC hdc, HGLRC rc, HWND hwnd)
+	: m_deviceContext(hdc)
+	, m_renderingContext(rc)
+	, m_windowHandle(hwnd)
 {
-	glClearColor(opengl.r, opengl.g, opengl.b, 1.0f);
+	const auto data_path_dir =
+		fs::current_path().root_name() /
+		fs::current_path().root_directory() /
+		fs::path("Users") /
+		fs::path("dev") /
+		fs::path("git") /
+		fs::path("learn-opengl") /
+		fs::path("data");
+
+	const auto shader_path_dir =
+		data_path_dir /
+		fs::path("shaders");
+
+	const auto cube_vs_path = (shader_path_dir / fs::path("basic_lighting.vs")).make_preferred();
+	const auto cube_fs_path = (shader_path_dir / fs::path("basic_lighting.fs")).make_preferred();
+	const auto light_vs_path = (shader_path_dir / fs::path("light_cube.vs")).make_preferred();
+	const auto light_fs_path = (shader_path_dir / fs::path("light_cube.fs")).make_preferred();
+
+	const auto texture_path_dir =
+		data_path_dir /
+		fs::path("textures");
+
+	const auto diffuse_map_path = (texture_path_dir / fs::path("container2_diffuse.png"));
+	const auto specular_map_path = (texture_path_dir / fs::path("container2_specular.png"));
+	const auto emission_map_path = (texture_path_dir / fs::path("matrix.jpg"));
+
+	auto VAOs = wmcv::InitGPUResources();
+	cubeVAO = VAOs.first;
+	lightVAO = VAOs.second;
+	lightingShader = std::move(wmcv::Shader(cube_vs_path, cube_fs_path));
+	lightCubeShader = std::move(wmcv::Shader(light_vs_path, light_fs_path));
+	diffuseMap = wmcv::Texture(diffuse_map_path, false);
+	specularMap = wmcv::Texture(specular_map_path, false);
+	emissionMap = wmcv::Texture(emission_map_path, false);
+}
+
+void Win32OpenGLImpl::ClearBuffers()
+{
+	glClearColor(r, g, b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Present(const Win32OpenGLImpl& opengl)
+void Win32OpenGLImpl::Present()
 {
-	SwapBuffers(opengl.m_deviceContext);
+	SwapBuffers(m_deviceContext);
 }
 
-void DrawScene(Win32OpenGLImpl& opengl)
+void Win32OpenGLImpl::DrawScene()
 {
 	// be sure to activate shader when setting uniforms/drawing objects
-	opengl.lightingShader.on();
-	opengl.lightingShader.setInt("material.diffuse", 0);
-	opengl.lightingShader.setInt("material.specular", 1);
-	opengl.lightingShader.setInt("material.emission", 2);
-	opengl.lightingShader.setVec3("viewPos", glm::vec3{opengl.viewPosition});
+	lightingShader.on();
+	lightingShader.setInt("material.diffuse", 0);
+	lightingShader.setInt("material.specular", 1);
+	//lightingShader.setInt("material.emission", 2);
 
-	opengl.lightingShader.setVec3("light.position", glm::vec3{opengl.lightTransform[3]});
-	opengl.lightingShader.setVec3("light.ambient", opengl.lightColor * glm::vec3{.2f});
-	opengl.lightingShader.setVec3("light.diffuse", opengl.lightColor * glm::vec3{.5f});
-	opengl.lightingShader.setVec3("light.specular", glm::vec3{1.f});
+	//lightingShader.setVec3("light.position", glm::vec3{lightTransform[3]});
+	//lightingShader.setVec3("light.direction", glm::vec3{-.2f, -1.f, -.3f});
+	lightingShader.setVec3("light.position", camera->position());
+	lightingShader.setVec3("light.direction", camera->front());
+	lightingShader.setFloat("light.cutoff", glm::cos(glm::radians(12.5f)));
+	lightingShader.setFloat("light.outerCutoff", glm::cos(glm::radians(17.5f)));
+	lightingShader.setVec3("viewPos", camera->position());
 
-	opengl.lightingShader.setVec3("material.specular", glm::vec3{.5f});
-	opengl.lightingShader.setFloat("material.shininess", 64.f);
+	lightingShader.setVec3("light.ambient", lightColor * glm::vec3{.1f});
+	lightingShader.setVec3("light.diffuse", lightColor * glm::vec3{.8f});
+	lightingShader.setVec3("light.specular", glm::vec3{1.f});
+	lightingShader.setFloat("light.constant", 1.f);
+	lightingShader.setFloat("light.linear", 0.9f);
+	lightingShader.setFloat("light.quadratic", 0.032f);
+
+	lightingShader.setFloat("material.shininess", 64.f);
 
 	// view/projection transformations
-	opengl.lightingShader.setMat4("projection", opengl.projection);
-	opengl.lightingShader.setMat4("view", opengl.view);
-	opengl.lightingShader.setMat4("model", opengl.model);
+	lightingShader.setMat4("projection", projection);
+	lightingShader.setMat4("view", view);
+	//lightingShader.setMat4("model", model);
 
 	//bind diffuse and specular map
-	opengl.diffuseMap.on(0);
-	opengl.specularMap.on(1);
-	opengl.emissionMap.on(2);
+	diffuseMap.on(0);
+	specularMap.on(1);
+	emissionMap.on(2);
 
 	// render the cube
-	glBindVertexArray(opengl.cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(cubeVAO);
+
+
+	for (unsigned int i = 0; i < 10; i++)
+	{
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		float angle = 20.0f * i;
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		lightingShader.setMat4("model", model);
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 
 	// also draw the lamp object
-	opengl.lightCubeShader.on();
-	opengl.lightCubeShader.setMat4("projection", opengl.projection);
-	opengl.lightCubeShader.setMat4("view", opengl.view);
-	opengl.lightCubeShader.setMat4("model", opengl.lightTransform);
+	//lightCubeShader.on();
+	//lightCubeShader.setMat4("projection", projection);
+	//lightCubeShader.setMat4("view", view);
+	//lightCubeShader.setMat4("model", lightTransform);
 
-	glBindVertexArray(opengl.lightVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	//glBindVertexArray(lightVAO);
+	//glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void Destroy(const Win32OpenGLImpl& opengl)
+void Win32OpenGLImpl::Destroy()
 {
 	wglMakeCurrent(nullptr, nullptr);
-	wglDeleteContext(opengl.m_renderingContext);
+	wglDeleteContext(m_renderingContext);
 }
 
-void SetClearColor( Win32OpenGLImpl& opengl, float r, float g, float b)
+void Win32OpenGLImpl::SetClearColor( float _r, float _g, float _b)
 {
-	opengl.r = r;
-	opengl.g = g;
-	opengl.b = b;
+	r = _r;
+	g = _g;
+	b = _b;
 }
 
-void SetOpacity([[maybe_unused]] Win32OpenGLImpl& opengl, float opacity)
+void Win32OpenGLImpl::PushCommand(RenderCommand&& cmd)
+{
+	m_commands.push(std::move(cmd));
+}
+
+void Win32OpenGLImpl::SetOpacity( float opacity)
 {
 	const float shifted = (opacity * 0.5f) + 0.5f;
-	opengl.mixValue = shifted;
+	mixValue = shifted;
 }
 
-void SetModelTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+void Win32OpenGLImpl::SetModelTransform( const glm::mat4& transform)
 {
-	opengl.model = transform;
+	model = transform;
 }
 
-void SetViewTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+void Win32OpenGLImpl::SetViewTransform( const glm::mat4& transform)
 {
-	opengl.view = transform;
+	view = transform;
 }
 
-void SetProjectionTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+void Win32OpenGLImpl::SetProjectionTransform( const glm::mat4& transform)
 {
-	opengl.projection = transform;
+	projection = transform;
 }
 
-void SetLightTransform(Win32OpenGLImpl& opengl, const glm::mat4& transform)
+void Win32OpenGLImpl::SetLightTransform( const glm::mat4& transform)
 {
-	opengl.lightTransform = transform;
+	lightTransform = transform;
 }
 
-void SetLightColor(Win32OpenGLImpl& opengl, const glm::vec3& color)
+void Win32OpenGLImpl::SetLightColor( const glm::vec3& color)
 {
-	opengl.lightColor = color;
+	lightColor = color;
 }
 
-void SetViewPosition(Win32OpenGLImpl& opengl, const glm::vec3& position)
+void Win32OpenGLImpl::SetCamera( Camera* c)
 {
-	opengl.viewPosition = position;
+	camera = c;
 }
-} // namespace wmcv
 
-wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
+std::unique_ptr<OpenGL> OpenGL::Create(wmcv::OpenGLCreateParams params)
 {
 	auto hWnd = static_cast<HWND>(params.nativeWindowHandle);
 	auto hInstance = GetModuleHandle(NULL);
@@ -502,18 +600,16 @@ wmcv::OpenGL wmcvCreateOpenGL(wmcv::OpenGLCreateParams params)
 
 	auto [cubeVAO, lightVAO] = wmcv::InitGPUResources();
 
-	auto result = wmcv::Win32OpenGLImpl{
-		.m_deviceContext = deviceContext,
-		.m_renderingContext = renderingContext,
-		.m_windowHandle = hWnd,
-		.lightVAO = lightVAO,
-		.cubeVAO = cubeVAO,
-		.lightingShader = wmcv::Shader(cube_vs_path, cube_fs_path),
-		.lightCubeShader = wmcv::Shader(light_vs_path, light_fs_path),
-		.diffuseMap = wmcv::Texture(diffuse_map_path, false),
-		.specularMap = wmcv::Texture(specular_map_path, false),
-		.emissionMap = wmcv::Texture(emission_map_path, false),
-	};
+	auto result = std::make_unique<Win32OpenGLImpl>(deviceContext, renderingContext, hWnd);
+	result->lightVAO = lightVAO;
+	result->cubeVAO = cubeVAO;
+	result->lightingShader = std::move(wmcv::Shader(cube_vs_path, cube_fs_path));
+	result->lightCubeShader = std::move(wmcv::Shader(light_vs_path, light_fs_path));
+	result->diffuseMap = wmcv::Texture(diffuse_map_path, false);
+	result->specularMap = wmcv::Texture(specular_map_path, false);
+	result->emissionMap = wmcv::Texture(emission_map_path, false);
 
 	return result;
 }
+
+} // namespace wmcv

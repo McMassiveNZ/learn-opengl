@@ -7,6 +7,7 @@ namespace wmcv
 {
 	struct Texture
 	{
+		Texture() = default;
 		Texture(const std::filesystem::path& path, bool flip);
 
 		void on(uint32_t slot);

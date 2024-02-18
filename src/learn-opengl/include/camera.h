@@ -35,6 +35,9 @@ public:
 
 	inline float zoom() const { return m_zoom; }
 	inline glm::vec3 position() const { return m_position; }
+	inline glm::vec3 front() const { return m_front; } 
+	inline glm::vec3 right() const { return m_right; } 
+	inline glm::vec3 up() const { return m_up; } 
 
 	void applyCameraMovement(Camera_Movement direction, float dt);
 	void applyCameraLook(float yaw, float pitch);

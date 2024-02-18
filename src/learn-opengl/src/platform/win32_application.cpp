@@ -5,7 +5,6 @@
 #include "window.h"
 #include "input.h"
 #include "clock.h"
-
 #include "camera.h"
 
 #include "wmcv_log\wmcv_log.h"
@@ -32,7 +31,7 @@ namespace wmcv
 		bool isRunning() const;
 
 		WindowPtr m_window;
-		OpenGL m_renderer;
+		OpenGLPtr m_renderer;
 		InputPtr  m_input;
 		Clock m_clock;
 
@@ -81,7 +80,7 @@ namespace wmcv
 			.name = "Learn OpenGL"
 		});
 
-		m_renderer = wmcvCreateOpenGL({
+		m_renderer = OpenGL::Create({
 			.nativeWindowHandle = m_window->GetNativeHandle(),
 			.versionMajor = 4,
 			.versionMinor = 6
@@ -94,16 +93,16 @@ namespace wmcv
 		light.speed = 50.f;
 
 		const auto perspective = glm::perspective(camera.zoom(), 800.f / 600.f, 0.01f, 1000.f);
-		SetProjectionTransform(m_renderer, perspective);
-		SetClearColor(m_renderer, 0.1f, 0.1f, 0.1f);
-		SetLightColor(m_renderer, glm::vec3{1.f});
+		m_renderer->SetProjectionTransform(perspective);
+		m_renderer->SetClearColor(0.1f, 0.1f, 0.1f);
+		m_renderer->SetLightColor(glm::vec3{1.f});
 
 		return true;
 	}
 
 	void Win32ApplicationImpl::shutdown()
 	{
-		Destroy(m_renderer);
+		m_renderer->Destroy();
 	}
 
 	void Win32ApplicationImpl::update()
@@ -195,21 +194,23 @@ namespace wmcv
 		//	sinf(m_clock.elapsed() * 0.7f),
 		//	sinf(m_clock.elapsed() * 1.3f),
 		//};
+
+		m_renderer->SetCamera(&camera);
 	}
 
 	void Win32ApplicationImpl::draw()
 	{
-		ClearBuffers(m_renderer);
+		m_renderer->ClearBuffers();
 
-		SetOpacity(m_renderer, 0.2f);
-		SetViewTransform(m_renderer, camera.buildViewMatrix());
-		SetModelTransform(m_renderer, model);
-		SetLightTransform(m_renderer, light.transform);
-		SetLightColor(m_renderer, light.color);
-		SetViewPosition(m_renderer, camera.position());
-		DrawScene(m_renderer);
+		m_renderer->SetOpacity(0.2f);
+		m_renderer->SetViewTransform(camera.buildViewMatrix());
+		m_renderer->SetModelTransform(model);
+		m_renderer->SetLightTransform(light.transform);
+		m_renderer->SetLightColor(light.color);
+		m_renderer->SetCamera(&camera);
+		m_renderer->DrawScene();
 
-		Present(m_renderer);
+		m_renderer->Present();
 	}
 
 	bool Win32ApplicationImpl::isRunning() const
